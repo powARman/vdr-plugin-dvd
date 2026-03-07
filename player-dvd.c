@@ -3092,7 +3092,7 @@ void cDvdPlayer::GetAudioLanguageStr(const char **AudioLanguageStr) const
     }
 
     uint16_t audioStreamLanguageCode = GetAudioTrackLanguageCode(currentNavAudioTrack);
-    char audioLanguageStr[3] = {audioStreamLanguageCode, audioStreamLanguageCode >> 8, 0};
+    char audioLanguageStr[3] = {char(audioStreamLanguageCode), char(audioStreamLanguageCode >> 8), 0};
     if (GetAudioStreamNumbers() > 1)
         sprintf(buffer,"%s %d/%d %s", audioStreamLanguageCode != 0xFFFF ? audioLanguageStr : "", GetCurrentNavAudioTrackIdx() + 1, GetAudioStreamNumbers() - 1, audioTypeDescr);
     else
@@ -3110,7 +3110,7 @@ void cDvdPlayer::GetSubtitleLanguageStr(const char **SubtitleLanguageStr) const
     }
 
     int subtitleStreamLanguageCode = GetSubtitleLanguageCode(currentNavSubpStream);
-    char subtitleLanguageStr[3] = {subtitleStreamLanguageCode, subtitleStreamLanguageCode >> 8, 0};
+    char subtitleLanguageStr[3] = {char(subtitleStreamLanguageCode), char(subtitleStreamLanguageCode >> 8), 0};
 
     if(GetSubtitleStreamNumbers() > 2)
         sprintf(buffer,"%s %d/%d", subtitleStreamLanguageCode !=0xFFFF ? subtitleLanguageStr : "", GetCurrentNavSubpStreamIdx(), GetSubtitleStreamNumbers() - 1);
