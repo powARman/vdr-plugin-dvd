@@ -1053,7 +1053,8 @@ void cDvdPlayer::Action(void) {
                     // we played an IFrame with DeviceStillPicture, or else -> reset !
                     DEBUG_CONTROL("clearing device because of IframeCnt < 0 && VideoFrame\n");
                     IframeCnt = 0;
-                    while (!DeviceFlush(100));
+                    while (!DeviceFlush(100))
+                        ;
 	  		        if (!firstClear) DeviceReset();
 		        }
 
@@ -1120,7 +1121,8 @@ void cDvdPlayer::Action(void) {
 	        if (cntVidBlocksPlayed > 0) {
 		        DEBUG_CONTROL("clearing device because of IframeCnt > 0, vid %d, aud %d\n",
 		    	    cntVidBlocksPlayed, cntAudBlocksPlayed);
-                while (!DeviceFlush(100));
+                while (!DeviceFlush(100))
+                    ;
 	            DeviceReset();
 	        }
             int iframeSize;
