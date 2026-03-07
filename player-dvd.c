@@ -940,7 +940,6 @@ void cDvdPlayer::Action(void) {
 
     int slomoloop=0;
     uint64_t sleept = 0; // in ticks !
-    uint64_t sleept_done = 0; // in ticks !
     bool trickMode = false;
     bool noAudio   = false;
     int PollTimeouts = 0;
@@ -1001,10 +1000,13 @@ void cDvdPlayer::Action(void) {
 		    blk_size, skipPlayVideo, IframeCnt, stillTimer/90U);
  */
 
-        sleept_done = 0;
+#ifdef PTSDEBUG2
+        uint64_t sleept_done = 0;
+#endif
         if (sleept) {
 	        if ( sleept/90U > 1000 )
 		        DEBUG_PTS("\n***** WARNING >=1000ms sleep %llums\n", sleept/90U);
+#ifdef PTSDEBUG2
             sleept_done = delay_ticks(sleept);
 
             DEBUG_PTS2("dvd loop sleep=%5ut(%3ums)/%5ut(%3ums), blk_size=%3d, skipPlayV=%d, AudioBlock=%d IframeCnt=%d stillTimer=%u\n",
@@ -1013,6 +1015,7 @@ void cDvdPlayer::Action(void) {
 		        blk_size, skipPlayVideo,
                 playedPacket==pktAudio,
 		        IframeCnt, stillTimer/90U);
+#endif
         }
         sleept = 0;
         if (playMode == pmPause || playMode == pmStill) {
@@ -1204,7 +1207,6 @@ void cDvdPlayer::Action(void) {
       else if (playDir == pdBackward && skipPlayVideo && cntVidBlocksPlayed>0 && fastWindFactor!=1)
       {
 	    uint32_t pos=0, posdiff=0, len=0;
-            int64_t pgcPosTicks = 0;
 
             if(fastWindFactor<0)
             {
@@ -1253,7 +1255,9 @@ void cDvdPlayer::Action(void) {
 	    if( dvdnav_get_position ( nav, &pos, &len) == DVDNAV_STATUS_OK &&
 		pos>posdiff )
 	    {
-            	      pgcPosTicks = (int64_t)pos * pgcTicksPerBlock;
+#ifdef CTRLDEBUG
+              uint64_t pgcPosTicks = (int64_t)pos * pgcTicksPerBlock;
+#endif
   		      uint32_t forcedBlockPosition = pos-posdiff;
 		      DEBUG_CONTROL("dvd %d %4.4u/%4.4u bwd get block: %4.4ldb %10.10ldt %lds\n",
 				playDir == pdBackward,
@@ -1410,8 +1414,10 @@ void cDvdPlayer::Action(void) {
 	    }
 	    case DVDNAV_AUDIO_STREAM_CHANGE: {
 	        DEBUG_NAV("%s:%d:NAV AUDIO STREAM CHANGE\n", __FILE__, __LINE__);
+#ifdef AUDIOIDDEBUG
 	        dvdnav_audio_stream_change_event_t *ev;
 	        ev = (dvdnav_audio_stream_change_event_t *)cache_ptr;
+#endif
 	        if(!currentNavAudioTrackUsrLocked) {
 		        int id = dvdnav_get_active_audio_stream(nav);
                 DEBUG_AUDIO_ID("dvd->SetCurrentAudioTrack DOLBY %02X\n", ttDolby + id);
@@ -1758,12 +1764,12 @@ void cDvdPlayer::playSPU(int spuId, unsigned char *data, int datalen)
 int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAudio)
 {
     int playedPacket = pktNone;
-    uint64_t scr;
-    uint32_t mux;
     unsigned char *sector = cache_buf;
 
+#ifdef PTSDEBUG
     static uint64_t lapts, lvpts;
     static int adiff;
+#endif
     char ptype = '-';
 
     //make sure we got a PS packet header
@@ -1772,8 +1778,10 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
         return playedPacket;
     }
 
-    scr = cPStream::fromSCR(sector+4) * 300 + cPStream::fromSCRext(sector+9);
-    mux = cPStream::fromMUXrate(sector+11);
+#ifdef PTSDEBUG
+    uint64_t scr = cPStream::fromSCR(sector+4) * 300 + cPStream::fromSCRext(sector+9);
+    uint32_t mux = cPStream::fromMUXrate(sector+11);
+#endif
 
     int offset = 14 + cPStream::stuffingLength(sector);
     sector += offset;
@@ -1811,7 +1819,9 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
 	        uint8_t currentFrameType = 0;
 	        bool do_copy = (lastFrameType == I_FRAME) &&  !(data[0] == 0 && data[1] == 0 && data[2] == 1);
 	        bool havePictureHeader = false;
+#ifdef IFRAMEDEBUG2
 	        bool haveSequenceHeader = false;
+#endif
 	        bool haveSliceBeforePicture = false;
 	        while (datalen > 6) {
 	            if (data[0] == 0 && data[1] == 0 && data[2] == 1) {
@@ -1837,7 +1847,9 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
 		            } else if (ptype2 == SEQUENCE_HEADER && datalen >= 8) {
                         /** get the last IFRAME */
                         iframeAssembler->Clear();
+#ifdef IFRAMEDEBUG2
 	   		            haveSequenceHeader = true;
+#endif
 			            data += 4;           //skip the header
 			            // check the aspect ratio and correct it
 			            //
@@ -1914,7 +1926,9 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
 	        }
 
 	        if (ptsFlag) {
+#ifdef PTSDEBUG
 	            VideoPts = lvpts = pktpts;
+#endif
                 cPStream::toPTS(sector + 9, pktpts);
             }
 
@@ -1968,8 +1982,10 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
             SetCurrentNavAudioTrackType(aMPEG);
 
 	        if (ptsFlag) {
+#ifdef PTSDEBUG
 	            adiff = pktpts - lapts;
 	            lapts = pktpts;
+#endif
 	            cPStream::toPTS(sector + 9, pktpts);
 	        }
 
@@ -2042,8 +2058,10 @@ int cDvdPlayer::playPacket(unsigned char *&cache_buf, bool trickMode, bool noAud
 				(void)audioTrackIndex;
 
 		        if (ptsFlag) {
+#ifdef PTSDEBUG
 		            adiff = pktpts - lapts;
 		            lapts = pktpts;
+#endif
 		        }
 
                 if (currentNavAudioTrack == audioId) {
