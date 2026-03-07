@@ -318,7 +318,8 @@ public:
 cDVDPlayerResume::cDVDPlayerResume(void)
 {
   // initialize the resume filename string.
-  asprintf(&resfile, "%s/%s", RESUMEDIR, RESUME_FILE);
+  if (asprintf(&resfile, "%s/%s", RESUMEDIR, RESUME_FILE) == -1)
+    resfile = NULL;
 }
 
 cDVDPlayerResume::~cDVDPlayerResume()
@@ -808,7 +809,8 @@ char* cDvdPlayer::GetDVDResumeKey() const {
              totalTitles, totalChapters, title_str);
     // finally the key is build as "DVDName_TotalTitles_OverallChapters"
     char* key;
-    asprintf(&key, "%s_%d_%d", title_str, totalTitles, totalChapters);
+    if (asprintf(&key, "%s_%d_%d", title_str, totalTitles, totalChapters) == -1)
+      key = NULL;
     // note: this is not completly unique. Maybe some other informations are more suitable, like:
     // - the "serial number" of the dvd as displayed in the libdvdnav debug output, but:
     //   it is not available through the current libdvdnav api
@@ -3076,12 +3078,20 @@ void cDvdPlayer::SetTitleInfoString()
 
     //Menu's has no titleNumbers and chapterNumbers (see dvdnav.h)
     if (titleNumber == 0)
-        asprintf(&titleinfo_str, "%d/%d %d", titleNumber, titleNumbers,  chapterNumber);
+    {
+        if (asprintf(&titleinfo_str, "%d/%d %d", titleNumber, titleNumbers,  chapterNumber) == -1)
+            titleinfo_str = NULL;
+    }
     else if (angleNumbers > 1)
-        asprintf(&titleinfo_str, "%d/%d %d/%d %d/%d", titleNumber, titleNumbers, chapterNumber, chapterNumbers, angleNumber, angleNumbers);
+    {
+        if (asprintf(&titleinfo_str, "%d/%d %d/%d %d/%d", titleNumber, titleNumbers, chapterNumber, chapterNumbers, angleNumber, angleNumbers) == -1)
+            titleinfo_str = NULL;
+    }
     else
-        asprintf(&titleinfo_str, "%d/%d %d/%d", titleNumber, titleNumbers,  chapterNumber, chapterNumbers);
-    return;
+    {
+        if (asprintf(&titleinfo_str, "%d/%d %d/%d", titleNumber, titleNumbers,  chapterNumber, chapterNumbers) == -1)
+            titleinfo_str = NULL;
+    }
 }
 
 void cDvdPlayer::GetAudioLanguageStr(const char **AudioLanguageStr) const
@@ -3159,13 +3169,16 @@ void cDvdPlayer::SetAspectString()
 
     switch (dvdnav_get_video_aspect(nav)) {
         case 0:
-            asprintf(&aspect_str, " 4:3");
+            if (asprintf(&aspect_str, " 4:3") == -1)
+                aspect_str = NULL;
             break;
         case 2:
-            asprintf(&aspect_str, "16:9_");
+            if (asprintf(&aspect_str, "16:9_") == -1)
+                aspect_str = NULL;
             break;
         case 3:
-            asprintf(&aspect_str, "16:9");
+            if (asprintf(&aspect_str, "16:9") == -1)
+                aspect_str = NULL;
             break;
         default:
             aspect_str = strdup(dummy_n_a);
