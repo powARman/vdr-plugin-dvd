@@ -3066,7 +3066,7 @@ void cDvdPlayer::SetTitleInfoString()
 void cDvdPlayer::GetAudioLanguageStr(const char **AudioLanguageStr) const
 {
 	static char buffer[100];
-	char *audioTypeDescr = NULL;
+	const char *audioTypeDescr = NULL;
 
     if (!DVDActiveAndRunning()) {
         *AudioLanguageStr = "n.a.";
