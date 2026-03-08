@@ -1721,6 +1721,11 @@ void cDvdPlayer::DoScaleMode(int &vaspect)
         if (vaspect == 2 && dvd_aspect == 3) // use letterbox (honor dvd_aspect)
             vaspect = 0x03;   // 16:9
     }
+    else if (Setup.VideoFormat && isInMenuDomain) {
+        // fix display of menu highlights of 4:3 DVDs on 16:9 TVs
+        if (vaspect == 2)
+            vaspect = 0x03;
+    }
 }
 
 void cDvdPlayer::seenVPTS(uint64_t pts)
